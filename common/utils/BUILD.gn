@@ -1,0 +1,190 @@
+# Copyright (C) 2024 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//base/request/request/request_aafwk.gni")
+import("//build/test.gni")
+
+rust_cxx("request_data_ability_cxx_gen") {
+  sources = [
+    "src/dataability/wrapper.rs"
+  ]
+}
+
+ohos_static_library("request_data_ability_cxx") {
+  sanitize = {
+    integer_overflow = true
+    ubsan = true
+    boundary_sanitize = true
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
+  include_dirs = [
+    "include",
+    "${target_gen_dir}/src",
+  ]
+
+  sources = [
+    "src/cxx/request_utils_dataability.cpp",
+  ]
+
+  sources += get_target_outputs(":request_data_ability_cxx_gen")
+
+  external_deps = [
+    "ability_runtime:ability_context_native",
+    "ability_runtime:ability_manager",
+    "ability_runtime:abilitykit_native",
+    "ability_runtime:ani_base_context",
+    "ability_runtime:app_context",
+    "rust_cxx:cxx_cppdeps",
+    "ability_runtime:data_ability_helper",
+  ]
+  deps = [ ":request_data_ability_cxx_gen" ]
+  subsystem_name = "request"
+  part_name = "request"
+}
+
+ohos_rust_static_library("request_data_ability") {
+  sanitize = {
+    integer_overflow = true
+    ubsan = true
+    boundary_sanitize = true
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
+  features = [ "ohos" ]
+
+  deps = [ 
+    ":request_data_ability_cxx",
+    ":request_utils"
+ ]
+
+  external_deps = [
+    "rust_cxx:lib",
+  ]
+  sources = [ "src/dataabilitylib.rs" ]
+  subsystem_name = "request"
+  part_name = "request"
+}
+
+rust_cxx("request_utils_cxx_gen") {
+  sources = [
+    "src/observe/network/wrapper.rs",
+    "src/wrapper.rs",
+  ]
+}
+
+ohos_static_library("request_utils_cxx") {
+  sanitize = {
+    integer_overflow = true
+    ubsan = true
+    boundary_sanitize = true
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
+  include_dirs = [
+    "include",
+    "${target_gen_dir}/src",
+  ]
+
+  sources = [
+    "src/cxx/request_utils_network.cpp",
+    "src/cxx/request_utils_wrapper.cpp",
+  ]
+
+  sources += get_target_outputs(":request_utils_cxx_gen")
+
+  external_deps = [
+    "ability_runtime:ability_context_native",
+    "ability_runtime:ability_manager",
+    "ability_runtime:abilitykit_native",
+    "ability_runtime:ani_base_context",
+    "ability_runtime:app_context",
+    "bundle_framework:appexecfwk_core_headers",
+    "c_utils:utils",
+    "common_event_service:cesfwk_innerkits",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "netmanager_base:net_conn_manager_if",
+    "netmanager_base:net_security_config_if",
+    "openssl:libcrypto_shared",
+    "openssl:libssl_shared",
+    "rust_cxx:cxx_cppdeps",
+    "samgr:samgr_proxy",
+    "runtime_core:ani",
+    "storage_service:storage_manager_acl",
+    "app_file_service:fileuri_native",
+    "ability_runtime:data_ability_helper",
+  ]
+  deps = [ ":request_utils_cxx_gen" ]
+  subsystem_name = "request"
+  part_name = "request"
+}
+
+ohos_rust_static_library("request_utils") {
+  sanitize = {
+    integer_overflow = true
+    ubsan = true
+    boundary_sanitize = true
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
+  features = [ "ohos" ]
+
+  deps = [ ":request_utils_cxx" ]
+
+  external_deps = [
+    "hilog:libhilog",
+    "hilog:hilog_rust",
+    "rust_cxx:lib",
+    "netmanager_base:ani_rs",
+  ]
+  sources = [ "src/lib.rs" ]
+  subsystem_name = "request"
+  part_name = "request"
+}
+
+ohos_rust_unittest("rust_utils_ut_test") {
+  module_out_path = "request/request/common"
+
+  sources = [ "src/lib.rs" ]
+
+  rustflags = [ "--cfg=feature=\"ohos\"" ]
+
+  deps = [
+    ":request_utils_cxx",
+  ]
+  external_deps = [
+    "hilog:libhilog",
+    "rust_cxx:lib",
+    "netmanager_base:ani_rs",
+  ]
+
+  subsystem_name = "request"
+  part_name = "request"
+}
+
+group("unittest") {
+  testonly = true
+  deps = []
+  if (!use_clang_coverage) {
+    deps = [ ":rust_utils_ut_test" ]
+  }
+}
